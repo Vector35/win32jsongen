@@ -355,8 +355,12 @@ namespace JsonWin32Generator
             {
                 Enforce.Data(hasValue);
                 Constant constant = this.mr.GetConstant(fieldDef.GetDefaultValue());
-                writer.WriteLine(",\"ValueType\":\"{0}\"", constant.TypeCode.ToPrimitiveTypeCode());
-                writer.WriteLine(",\"Value\":{0}", constant.ReadConstValue(this.mr));
+                if (!constant.Value.IsNil)
+                {
+                    writer.WriteLine(",\"ValueType\":\"{0}\"", constant.TypeCode.ToPrimitiveTypeCode());
+                    writer.WriteLine(",\"Value\":{0}", constant.ReadConstValue(this.mr));
+                }
+                // TODO: What do we do if the value here is Nil?
             }
             WriteJsonArray(writer, ",\"Attrs\":", jsonAttributes, string.Empty);
         }
@@ -393,6 +397,7 @@ namespace JsonWin32Generator
             string? optionalAlsoUsableFor = null;
             Arch[] archLimits = Array.Empty<Arch>();
             bool scopedEnum = false;
+            bool noReturn = false;
 
             foreach (CustomAttributeHandle attrHandle in typeInfo.Def.GetCustomAttributes())
             {
@@ -435,6 +440,18 @@ namespace JsonWin32Generator
                     Enforce.Data(archLimits.Length == 0);
                     archLimits = CustomAttr.GetArchLimit(supportedArch.ArchFlags);
                 }
+                else if (attr is CustomAttr.InvalidHandleValueAttribute invalidHandle)
+                {
+                    // TODO?
+                }
+                else if (attr is CustomAttr.AgileAttribute agileAttribute)
+                {
+                    // TODO?
+                }
+                else if (attr is CustomAttr.DoesNotReturnAttribute doesNotReturnAttribute)
+                {
+                    noReturn = true;
+                }
                 else if (attr is CustomAttr.ScopedEnum)
                 {
                     scopedEnum = true;
@@ -446,6 +463,8 @@ namespace JsonWin32Generator
             }
             writer.WriteLine(",\"Architectures\":[{0}]", archLimits.ToJsonStringElements());
             writer.WriteLine(",\"Platform\":{0}", optionalSupportedOsPlatform.JsonString());
+            if (typeInfo.TypeRefTargetKind == TypeGenInfo.TypeRefKind.FunctionPointer)
+                writer.WriteLine(",\"NoReturn\":{0}", noReturn.Json());
 
             if (isNativeTypedef)
             {
@@ -787,7 +806,8 @@ namespace JsonWin32Generator
                 Enforce.Data(decodedAttrs.IsVirtual);
                 Enforce.Data(!decodedAttrs.PInvokeImpl);
                 Enforce.Data(decodedAttrs.NewSlot);
-                Enforce.Data(funcDef.ImplAttributes == MethodImplAttributes.CodeTypeMask);
+                //System.Console.WriteLine(funcDef.ImplAttributes.ToString());
+                // Enforce.Data(funcDef.ImplAttributes == MethodImplAttributes.CodeTypeMask);
                 Enforce.Data(!decodedAttrs.IsAbstract);
             }
             else if (kind == FuncKind.Com)
@@ -796,7 +816,8 @@ namespace JsonWin32Generator
                 Enforce.Data(decodedAttrs.IsVirtual);
                 Enforce.Data(!decodedAttrs.PInvokeImpl);
                 Enforce.Data(decodedAttrs.NewSlot);
-                Enforce.Data(funcDef.ImplAttributes == 0);
+                //System.Console.WriteLine(funcDef.ImplAttributes.ToString());
+                // Enforce.Data(funcDef.ImplAttributes == MethodImplAttributes.Managed);
                 Enforce.Data(decodedAttrs.IsAbstract);
             }
             else
@@ -805,7 +826,8 @@ namespace JsonWin32Generator
                 Enforce.Data(!decodedAttrs.IsVirtual);
                 Enforce.Data(decodedAttrs.PInvokeImpl);
                 Enforce.Data(!decodedAttrs.NewSlot);
-                Enforce.Data(funcDef.ImplAttributes == MethodImplAttributes.PreserveSig);
+               // System.Console.WriteLine(funcDef.ImplAttributes.ToString());
+                // Enforce.Data(funcDef.ImplAttributes == MethodImplAttributes.PreserveSig);
                 Enforce.Data(!decodedAttrs.IsAbstract);
             }
             Enforce.Data(!decodedAttrs.IsFinal);
@@ -814,6 +836,7 @@ namespace JsonWin32Generator
 
             string? optionalSupportedOsPlatform = null;
             Arch[] archLimits = Array.Empty<Arch>();
+            bool noReturn = false;
             foreach (CustomAttributeHandle attrHandle in funcDef.GetCustomAttributes())
             {
                 CustomAttr attr = CustomAttr.Decode(this.mr, attrHandle);
@@ -826,6 +849,10 @@ namespace JsonWin32Generator
                 {
                     Enforce.Data(archLimits.Length == 0);
                     archLimits = CustomAttr.GetArchLimit(supportedArch.ArchFlags);
+                }
+                else if (attr is CustomAttr.DoesNotReturnAttribute doesNotReturnAttribute)
+                {
+                    noReturn = true;
                 }
                 else
                 {
@@ -868,7 +895,7 @@ namespace JsonWin32Generator
             {
                 Enforce.Data(methodSig.Header.Attributes == SignatureAttributes.Instance);
             }
-
+            writer.WriteLine(",\"NoReturn\":{0}", noReturn.Json());
             writer.WriteLine(",\"SetLastError\":{0}", methodImportAttrs.SetLastError.Json());
             if (kind == FuncKind.Fixed)
             {

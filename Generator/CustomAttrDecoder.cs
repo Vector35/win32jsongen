@@ -57,6 +57,16 @@ namespace JsonWin32Generator
                 return CustomAttrType.UInt32;
             }
 
+            if (code == PrimitiveTypeCode.UInt64)
+            {
+                return CustomAttrType.UInt64;
+            }
+
+            if (code == PrimitiveTypeCode.Int64)
+            {
+                return CustomAttrType.Int64;
+            }
+
             throw new NotImplementedException(Fmt.In($"convert PrimitiveTypeCode.{code} to CustomAttrType has not been implemented"));
         }
 
@@ -137,6 +147,8 @@ namespace JsonWin32Generator
         UInt16,
         Int32,
         UInt32,
+        Int64,
+        UInt64,
         UnmanagedType,
         CallConv,
         SystemType,
@@ -156,6 +168,8 @@ namespace JsonWin32Generator
             ClrTypeToCustomAttrTypeMap.Add(typeof(ushort), CustomAttrType.UInt16);
             ClrTypeToCustomAttrTypeMap.Add(typeof(int), CustomAttrType.Int32);
             ClrTypeToCustomAttrTypeMap.Add(typeof(uint), CustomAttrType.UInt32);
+            ClrTypeToCustomAttrTypeMap.Add(typeof(long), CustomAttrType.Int64);
+            ClrTypeToCustomAttrTypeMap.Add(typeof(ulong), CustomAttrType.UInt64);
             ClrTypeToCustomAttrTypeMap.Add(typeof(string), CustomAttrType.Str);
             ClrTypeToCustomAttrTypeMap.Add(typeof(System.Runtime.InteropServices.UnmanagedType), CustomAttrType.UnmanagedType);
             ClrTypeToCustomAttrTypeMap.Add(typeof(Architecture), CustomAttrType.Architecture);
@@ -408,6 +422,25 @@ namespace JsonWin32Generator
                 return CustomAttr.Reserved.Instance;
             }
 
+            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "AgileAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.AgileAttribute.Instance;
+            }
+
+            if (attrName == new NamespaceAndName("System.Diagnostics.CodeAnalysis", "DoesNotReturnAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.DoesNotReturnAttribute.Instance;
+            }
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "InvalidHandleValueAttribute"))
+            {
+                return new CustomAttr.InvalidHandleValueAttribute(Enforce.FixedAttrAs<long>(attrArgs.FixedArguments[0]));
+            }
+
             throw new NotImplementedException(Fmt.In($"unhandled custom attribute \"{attrName.Namespace}\", \"{attrName.Name}\""));
         }
 
@@ -639,6 +672,34 @@ namespace JsonWin32Generator
             public static readonly Reserved Instance = new Reserved();
 
             private Reserved()
+            {
+            }
+        }
+
+        internal class AgileAttribute : CustomAttr
+        {
+            public static readonly AgileAttribute Instance = new AgileAttribute();
+
+            private AgileAttribute()
+            {
+            }
+        }
+
+        internal class InvalidHandleValueAttribute : CustomAttr
+        {
+            internal InvalidHandleValueAttribute(long value)
+            {
+                this.HandleValue = value;
+            }
+
+            internal long HandleValue { get; }
+        }
+
+        internal class DoesNotReturnAttribute : CustomAttr
+        {
+            public static readonly DoesNotReturnAttribute Instance = new DoesNotReturnAttribute();
+
+            private DoesNotReturnAttribute()
             {
             }
         }
