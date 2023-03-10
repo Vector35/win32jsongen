@@ -11,6 +11,7 @@ namespace JsonWin32Generator
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Reflection.Metadata;
+    using System.Xml.Linq;
 
     internal class CustomAttrDecoder : ICustomAttributeTypeProvider<CustomAttrType>
     {
@@ -256,6 +257,7 @@ namespace JsonWin32Generator
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
                 short? countParamIndex = null;
                 int? countConst = null;
+                string countFieldName = "";
                 foreach (CustomAttributeNamedArgument<CustomAttrType> namedArg in attrArgs.NamedArguments)
                 {
                     if (namedArg.Name == "CountConst")
@@ -267,6 +269,12 @@ namespace JsonWin32Generator
                     {
                         Enforce.Data(!countParamIndex.HasValue);
                         countParamIndex = Enforce.NamedAttrAs<short>(namedArg);
+                    }
+                    else if (namedArg.Name == "CountFieldName")
+                    {
+                        // Enforce.Data(countFieldName == "");
+                        countFieldName = Enforce.NamedAttrAs<string>(namedArg);
+                        // Throwing countFieldName away for now
                     }
                     else
                     {
@@ -369,7 +377,7 @@ namespace JsonWin32Generator
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 1);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
-                return new CustomAttr.FreeWith(Enforce.FixedAttrAs<string>(attrArgs.FixedArguments[0]));
+                return new CustomAttr.FreeWithAttribute(Enforce.FixedAttrAs<string>(attrArgs.FixedArguments[0]));
             }
 
             if (attrName == new NamespaceAndName("Windows.Win32.Interop", "SupportedOSPlatformAttribute"))
@@ -439,6 +447,34 @@ namespace JsonWin32Generator
             if (attrName == new NamespaceAndName("Windows.Win32.Interop", "InvalidHandleValueAttribute"))
             {
                 return new CustomAttr.InvalidHandleValueAttribute(Enforce.FixedAttrAs<long>(attrArgs.FixedArguments[0]));
+            }
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "NativeEncodingAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 1);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return new CustomAttr.NativeEncodingAttribute(Enforce.FixedAttrAs<string>(attrArgs.FixedArguments[0]));
+            }
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "CanReturnMultipleSuccessValuesAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.CanReturnMultipleSuccessValuesAttribute.Instance;
+            }
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "CanReturnErrorsAsSuccessAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.CanReturnErrorsAsSuccessAttribute.Instance;
+            }
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "ConstantAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 1); // TODO what do we do with this argument?? 
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.ConstAttribute.Instance;
             }
 
             throw new NotImplementedException(Fmt.In($"unhandled custom attribute \"{attrName.Namespace}\", \"{attrName.Name}\""));
@@ -599,9 +635,9 @@ namespace JsonWin32Generator
             }
         }
 
-        internal class FreeWith : CustomAttr
+        internal class FreeWithAttribute : CustomAttr
         {
-            internal FreeWith(string name)
+            internal FreeWithAttribute(string name)
             {
                 this.Name = name;
             }
@@ -700,6 +736,45 @@ namespace JsonWin32Generator
             public static readonly DoesNotReturnAttribute Instance = new DoesNotReturnAttribute();
 
             private DoesNotReturnAttribute()
+            {
+            }
+        }
+
+        internal class NativeEncodingAttribute : CustomAttr
+        {
+            internal NativeEncodingAttribute(string name)
+            {
+                this.Name = name;
+            }
+            internal string Name { get; }
+        }
+
+
+        internal class CanReturnMultipleSuccessValuesAttribute : CustomAttr
+        {
+            public static readonly CanReturnMultipleSuccessValuesAttribute Instance = new CanReturnMultipleSuccessValuesAttribute();
+
+            private CanReturnMultipleSuccessValuesAttribute()
+            {
+            }
+        }
+
+
+        internal class CanReturnErrorsAsSuccessAttribute : CustomAttr
+        {
+            public static readonly CanReturnErrorsAsSuccessAttribute Instance = new CanReturnErrorsAsSuccessAttribute();
+
+            private CanReturnErrorsAsSuccessAttribute()
+            {
+            }
+        }
+
+
+        internal class ConstAttribute : CustomAttr
+        {
+            public static readonly ConstAttribute Instance = new ConstAttribute();
+
+            private ConstAttribute()
             {
             }
         }

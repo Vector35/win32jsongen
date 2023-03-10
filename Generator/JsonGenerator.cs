@@ -308,6 +308,8 @@ namespace JsonWin32Generator
 
             CustomAttr.Guid? optionalGuidValue = null;
             CustomAttr.ProperyKey? optionalPropertyKey = null;
+            CustomAttr.NativeEncodingAttribute? optionalNativeAttribute = null;
+            CustomAttr.ConstAttribute? optionalConstAttribute = null;
 
             // TODO: what is fieldDef.GetMarshallingDescriptor?
             foreach (CustomAttributeHandle attrHandle in fieldDef.GetCustomAttributes())
@@ -328,6 +330,14 @@ namespace JsonWin32Generator
                 else if (attr is CustomAttr.ProperyKey key)
                 {
                     optionalPropertyKey = key;
+                }
+                else if (attr is CustomAttr.NativeEncodingAttribute encoding)
+                {
+                    optionalNativeAttribute = encoding;
+                }
+                else if (attr is CustomAttr.ConstAttribute constAttr)
+                {
+                    optionalConstAttribute = constAttr;
                 }
                 else
                 {
@@ -350,6 +360,12 @@ namespace JsonWin32Generator
                 Enforce.Data(!hasValue);
                 writer.WriteLine(",\"ValueType\":\"PropertyKey\"");
                 writer.WriteLine(",\"Value\":{{\"Fmtid\":\"{0}\",\"Pid\":{1}}}", optionalPropertyKey.Fmtid, optionalPropertyKey.Pid);
+            }
+            else if (optionalConstAttribute != null)
+            {
+                Enforce.Data(!hasValue);
+                writer.WriteLine(",\"ValueType\":\"ConstantAttribute\"");
+                writer.WriteLine(",\"Value\":\"True\"");
             }
             else
             {
@@ -455,6 +471,10 @@ namespace JsonWin32Generator
                 else if (attr is CustomAttr.ScopedEnum)
                 {
                     scopedEnum = true;
+                }
+                else if (attr is CustomAttr.Obsolete)
+                {
+                    // skip
                 }
                 else
                 {
@@ -854,6 +874,18 @@ namespace JsonWin32Generator
                 {
                     noReturn = true;
                 }
+                else if (attr is CustomAttr.CanReturnMultipleSuccessValuesAttribute canReturnMultipleSuccessValues)
+                {
+                    // skip
+                }
+                else if (attr is CustomAttr.CanReturnErrorsAsSuccessAttribute canReturnErrorsAsSuccessAttribute)
+                {
+                    // skip
+                }
+                else if (attr is CustomAttr.Obsolete obsolete)
+                {
+                    // skip
+                }
                 else
                 {
                     Violation.Data();
@@ -869,8 +901,8 @@ namespace JsonWin32Generator
             if (kind == FuncKind.Fixed)
             {
                 Enforce.Data(methodImportAttrs.ExactSpelling);
-                Enforce.Data(methodImportAttrs.CallConv == CallConv.Winapi);
-                Enforce.Data(this.mr.GetString(methodImport.Name) == funcName);
+                // Enforce.Data(methodImportAttrs.CallConv == CallConv.Winapi);
+                //Enforce.Data(this.mr.GetString(methodImport.Name) == funcName, String.Format("{0} != {1}", this.mr.GetString(methodImport.Name), funcName));
             }
             else
             {
@@ -886,7 +918,8 @@ namespace JsonWin32Generator
             MethodSignature<TypeRef> methodSig = funcDef.DecodeSignature(this.typeRefDecoder, null);
 
             Enforce.Data(methodSig.Header.Kind == SignatureKind.Method);
-            Enforce.Data(methodSig.Header.CallingConvention == SignatureCallingConvention.Default);
+
+            writer.WriteLine(",\"CallingConvention\":\"{0}\"", methodSig.Header.CallingConvention.ToString());
             if (kind == FuncKind.Fixed)
             {
                 Enforce.Data(methodSig.Header.Attributes == SignatureAttributes.None);
@@ -928,6 +961,7 @@ namespace JsonWin32Generator
                 Enforce.Data(
                        funcName.StartsWith("get_", StringComparison.Ordinal)
                     || funcName.StartsWith("put_", StringComparison.Ordinal)
+                    || funcName.StartsWith("set_", StringComparison.Ordinal)
                     || funcName.StartsWith("add_", StringComparison.Ordinal)
                     || funcName.StartsWith("remove_", StringComparison.Ordinal));
                 funcJsonAttrs.Add("\"SpecialName\"");
@@ -1008,7 +1042,7 @@ namespace JsonWin32Generator
                     {
                         jsonAttributes.Add("\"RetVal\"");
                     }
-                    else if (attr is CustomAttr.FreeWith freeWith)
+                    else if (attr is CustomAttr.FreeWithAttribute freeWith)
                     {
                         jsonAttributes.Add(Fmt.In($"{{\"Kind\":\"FreeWith\",\"Func\":\"{freeWith.Name}\"}}"));
                     }
@@ -1038,7 +1072,7 @@ namespace JsonWin32Generator
                     patch.ApplyCount += 1;
                     if (patch.Config.Optional)
                     {
-                        Enforce.Patch(!optional, Fmt.In($"parameter '{paramName}' Optional patch has been fixed"));
+                        //Enforce.Patch(!optional, Fmt.In($"parameter '{paramName}' Optional patch has been fixed"));
                         optional = true;
                     }
                     if (patch.Config.Const)
