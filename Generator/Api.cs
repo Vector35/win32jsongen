@@ -13,7 +13,8 @@ namespace JsonWin32Generator
         internal Api(string @namespace)
         {
             Enforce.Data(
-                @namespace.StartsWith(Metadata.WindowsWin32NamespacePrefix, StringComparison.Ordinal),
+                @namespace.StartsWith(Metadata.WindowsWin32NamespacePrefix, StringComparison.Ordinal) ||
+                @namespace.StartsWith(Metadata.WindowsWdkNamespacePrefix, StringComparison.Ordinal),
                 Fmt.In($"unexpected namespace '{@namespace}', expected it to start with '{Metadata.WindowsWin32NamespacePrefix}'"));
             this.Name = @namespace[Metadata.WindowsWin32NamespacePrefix.Length..];
         }

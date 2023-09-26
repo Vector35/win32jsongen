@@ -1,7 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <MetadataVersion>42.0.39-preview</MetadataVersion>
+    <MetadataVersion>55.0.45-preview</MetadataVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <WDKMetadataVersion>0.1.40-experimental</WDKMetadataVersion>
   </PropertyGroup>
   
   <PropertyGroup>
@@ -16,13 +19,20 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.1" PrivateAssets="all" />
     <PackageReference Include="Nullable" Version="1.3.0" />
-    <PackageReference Include="System.Reflection.Metadata" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Windows.SDK.Win32Metadata" Version="$(MetadataVersion)" GeneratePathProperty="true" PrivateAssets="none" />
+    <PackageReference Include="System.Reflection.Metadata" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Windows.SDK.Win32Metadata" Version="55.0.45-preview" GeneratePathProperty="true" PrivateAssets="none" />
+    <PackageReference Include="Microsoft.Windows.WDK.Win32Metadata" Version="$(WDKMetadataVersion)" GeneratePathProperty="true" PrivateAssets="none" />
     <PackageReference Include="System.Memory" Version="4.5.4" PrivateAssets="none" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.261" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
     <None Include="@(ProjectionMetadataWinmd)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <!-- Include the Windows.Wdk.winmd file from the NuGet package -->
+    <None Include="$(NuGetPackageRoot)microsoft.windows.wdk.win32metadata\0.1.40-experimental\Windows.Wdk.winmd">
+      <Link>Windows.Wdk.winmd</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

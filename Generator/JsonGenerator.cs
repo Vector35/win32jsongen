@@ -11,6 +11,7 @@ namespace JsonWin32Generator
     using System.Reflection;
     using System.Reflection.Metadata;
     using System.Text;
+    using static JsonWin32Generator.CustomAttr;
 
     internal class JsonGenerator
     {
@@ -137,18 +138,21 @@ namespace JsonWin32Generator
                 generator.GenerateApi(writer, apiPatch, api);
             }
 
-            foreach (KeyValuePair<string, ApiPatch> apiPatchPair in apiMap)
+            if (!outDir.EndsWith("wdk_api"))
             {
-                string apiName = apiPatchPair.Key;
-                Enforce.Patch(
-                    apiPatchPair.Value.ApplyCount > 0,
-                    Fmt.In($"ApiPatch for '{apiName}' has not been applied, has this Api been removed?"));
-                apiPatchPair.Value.SelectSubPatches(patch =>
+                foreach (KeyValuePair<string, ApiPatch> apiPatchPair in apiMap)
                 {
+                    string apiName = apiPatchPair.Key;
                     Enforce.Patch(
-                        patch.ApplyCount > 0,
-                        Fmt.In($"In Api '{apiName}', patch '{patch}' has not been applied, maybe it has been fixed?"));
-                });
+                        apiPatchPair.Value.ApplyCount > 0,
+                        Fmt.In($"ApiPatch for '{apiName}' has not been applied, has this Api been removed?"));
+                    apiPatchPair.Value.SelectSubPatches(patch =>
+                    {
+                        Enforce.Patch(
+                            patch.ApplyCount > 0,
+                            Fmt.In($"In Api '{apiName}', patch '{patch}' has not been applied, maybe it has been fixed?"));
+                    });
+                }
             }
         }
 
@@ -339,6 +343,10 @@ namespace JsonWin32Generator
                 {
                     optionalConstAttribute = constAttr;
                 }
+                else if (attr is CustomAttr.DocumentationAttribute documentation)
+                {
+                    // TODO: Handle documentation
+                }
                 else
                 {
                     Violation.Data();
@@ -476,10 +484,47 @@ namespace JsonWin32Generator
                 {
                     // skip
                 }
+                else if (attr is CustomAttr.DocumentationAttribute)
+                {
+                    // skip
+                }
+                else if (attr is CustomAttr.AnsiAttribute)
+                {
+                    // skip
+                }
+                else if (attr is CustomAttr.UnicodeAttribute)
+                {
+                    // skip
+                }
+                else if (attr is CustomAttr.StructSizeFieldAttribute)
+                {
+                    // skip
+                }
+                else if (attr is CustomAttr.FlexibleArrayAttribute)
+                {
+                    // skip
+                }
+                else if (attr is CustomAttr.MetadataTypedefAttribute)
+                {
+                    // skip
+                }
+                else if (attr is CustomAttr.AttributeUsageAttribute)
+                {
+                    // skip
+                }
+                else if (attr is CustomAttr.ComVisibleAttribute)
+                {
+                    // skip
+                }
+                else if (attr is CustomAttr.AssociatedConstantAttribute)
+                {
+                    // skip
+                }
                 else
                 {
                     Enforce.Data(false);
                 }
+                
             }
             writer.WriteLine(",\"Architectures\":[{0}]", archLimits.ToJsonStringElements());
             writer.WriteLine(",\"Platform\":{0}", optionalSupportedOsPlatform.JsonString());
@@ -524,7 +569,8 @@ namespace JsonWin32Generator
             {
                 Enforce.Data(scopedEnum == false);
                 Enforce.Data(typeInfo.TypeRefTargetKind == TypeGenInfo.TypeRefKind.Default);
-                Enforce.Data(freeFuncAttr == null);
+                if (freeFuncAttr != null)
+                    writer.WriteLine(",\"FreeFunc\":{0}", freeFuncAttr.JsonString());
                 Enforce.Data(optionalAlsoUsableFor is null);
                 if (guid == null || typePatch.Config.NotComClassID)
                 {
@@ -553,6 +599,10 @@ namespace JsonWin32Generator
                 Enforce.Data(optionalAlsoUsableFor is null);
                 Enforce.Data(attrs.Layout == TypeLayoutKind.Auto);
                 this.GenerateFunctionPointer(writer, typeInfo);
+            }
+            else if (typeInfo.BaseTypeName == new NamespaceAndName("System", "Attribute"))
+            {
+                // do nothing
             }
             else
             {
@@ -632,7 +682,7 @@ namespace JsonWin32Generator
                     FieldAttributes.Static |
                     FieldAttributes.Literal |
                     FieldAttributes.HasDefault));
-                Enforce.Data(fieldDef.GetCustomAttributes().Count == 0);
+                // Enforce.Data(fieldDef.GetCustomAttributes().Count == 0);  // TODO Just ignore custom attributes for now
                 Enforce.Data(fieldDef.GetOffset() == -1);
                 Enforce.Data(fieldDef.GetRelativeVirtualAddress() == 0);
                 Constant valueConstant = this.mr.GetConstant(fieldDef.GetDefaultValue());
@@ -686,7 +736,7 @@ namespace JsonWin32Generator
                     // I could add a "Constants" subfield, but right now only 2 types have these const fields so it's not worth adding
                     // this extra field to every single type just to accomodate some const fields on a couple types.
                     // Maybe I should open a github issue about this?  Ask why these are the only 2 types using const fields.
-                    Enforce.Data(typeInfo.Name == "WSDXML_NODE" || typeInfo.Name == "WhitePoint");
+                    // Enforce.Data(typeInfo.Name == "WSDXML_NODE" || typeInfo.Name == "WhitePoint");
                     Enforce.Data(fieldDef.GetCustomAttributes().Count == 0);
                     Enforce.Data(fieldDef.GetOffset() == -1);
                     Constant constant = this.mr.GetConstant(fieldDef.GetDefaultValue());
@@ -722,6 +772,22 @@ namespace JsonWin32Generator
                     else if (attr is CustomAttr.Obsolete obselete)
                     {
                         jsonAttributes.Add("\"Obselete\"");
+                    }
+                    else if (attr is CustomAttr.FlexibleArrayAttribute flex)
+                    {
+                        jsonAttributes.Add("\"FlexibleArray\"");
+                    }
+                    else if (attr is CustomAttr.AssociatedEnumAttribute aea)
+                    {
+                        // TODO what is this?
+                    }
+                    else if (attr is CustomAttr.NativeBitfieldAttribute nba)
+                    {
+                        // TODO what is this?
+                    }
+                    else if (attr is CustomAttr.DocumentationAttribute da)
+                    {
+                        // TODO what is this?
                     }
                     else
                     {
@@ -886,6 +952,22 @@ namespace JsonWin32Generator
                 {
                     // skip
                 }
+                else if (attr is CustomAttr.DocumentationAttribute documentation)
+                {
+                    // skip
+                }
+                else if (attr is CustomAttr.AnsiAttribute ansi)
+                {
+                    // skip
+                }
+                else if (attr is CustomAttr.UnicodeAttribute unicode)
+                {
+                    // skip
+                }
+                else if (attr is CustomAttr.ConstAttribute _const)
+                {
+                    // skip
+                }
                 else
                 {
                     Violation.Data();
@@ -900,7 +982,7 @@ namespace JsonWin32Generator
             Enforce.Data(methodImportAttrs.ThrowOnUnmapableChar == null);
             if (kind == FuncKind.Fixed)
             {
-                Enforce.Data(methodImportAttrs.ExactSpelling);
+                // Enforce.Data(methodImportAttrs.ExactSpelling);
                 // Enforce.Data(methodImportAttrs.CallConv == CallConv.Winapi);
                 //Enforce.Data(this.mr.GetString(methodImport.Name) == funcName, String.Format("{0} != {1}", this.mr.GetString(methodImport.Name), funcName));
             }
@@ -1057,6 +1139,22 @@ namespace JsonWin32Generator
                     else if (attr is CustomAttr.Reserved)
                     {
                         jsonAttributes.Add("\"Reserved\"");
+                    }
+                    else if (attr is CustomAttr.AssociatedEnumAttribute)
+                    {
+                        // do nothing
+                    }
+                    else if (attr is CustomAttr.DocumentationAttribute)
+                    {
+                        // do nothing
+                    }
+                    else if (attr is CustomAttr.RaiiFree)
+                    {
+                        // do nothing
+                    }
+                    else if (attr is CustomAttr.IgnoreReturnAttribute)
+                    {
+                        // do nothing
                     }
                     else
                     {

@@ -15,7 +15,8 @@ internal class Program
     private static int Main()
     {
         string repoDir = JsonWin32Common.FindWin32JsonRepo();
-        string apiDir = JsonWin32Common.GetAndVerifyWin32JsonApiDir(repoDir);
+        string apiDir = JsonWin32Common.GetAndVerifyWin32JsonApiDir(repoDir, false);
+        string wdkApiDir = JsonWin32Common.GetAndVerifyWin32JsonApiDir(repoDir, true);
         CleanDir(apiDir);
         var generateTimer = Stopwatch.StartNew();
         {
@@ -23,8 +24,12 @@ internal class Program
             using PEReader peReader = new PEReader(metadataFileStream);
             Console.WriteLine("OutputDirectory: {0}", apiDir);
             JsonGenerator.Generate(peReader.GetMetadataReader(), apiDir);
-        }
 
+            //using FileStream metadataFileStream2 = File.OpenRead(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location!)!, "Windows.Wdk.winmd"));
+            //using PEReader peReader2 = new PEReader(metadataFileStream2);
+            //Console.WriteLine("OutputDirectory: {0}", wdkApiDir);
+            //JsonGenerator.Generate(peReader2.GetMetadataReader(), wdkApiDir);
+        }
         Console.WriteLine("Generation time: {0}", generateTimer.Elapsed);
         return 0;
     }

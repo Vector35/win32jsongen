@@ -32,9 +32,9 @@ internal static class JsonWin32Common
         }
     }
 
-    public static string GetAndVerifyWin32JsonApiDir(string repoDir)
+    public static string GetAndVerifyWin32JsonApiDir(string repoDir, bool wdk)
     {
-        string apiDir = Path.Combine(repoDir, "api");
+        string apiDir = Path.Combine(repoDir, wdk ? "wdk_api" : "api");
         if (!Directory.Exists(apiDir))
         {
             Console.WriteLine("Error: the win32json repository '{0}' does not have an 'api' subdirectory", repoDir);

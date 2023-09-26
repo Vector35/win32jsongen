@@ -8,6 +8,7 @@ namespace JsonWin32Generator
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Reflection.Metadata;
+    using static JsonWin32Generator.CustomAttr;
 
     // Implements the ISignatureTypeProvider interface used as a callback by MetadataReader to create objects that represent types.
     internal class TypeRefDecoder : ISignatureTypeProvider<TypeRef, INothing?>
@@ -87,9 +88,18 @@ namespace JsonWin32Generator
                         return new TypeRef.MissingClrType(@namespace, name);
                     }
                 }
-                else if (@namespace == "Windows.Foundation")
+                else if (@namespace == "Windows.Foundation" || @namespace == "Windows.Win32.Foundation" || @namespace == "Windows.Win32.Security" || @namespace == "Windows.Foundation.Collections")
                 {
-                    if (name == "IPropertyValue")
+
+                    if (name == "PWSTR")
+                    {
+                        return TypeRef.LPArray.PWSTRInstance;
+                    }
+                    else if (name == "PSTR")
+                    {
+                        return TypeRef.LPArray.PSTRInstance;
+                    }
+                    else if (name == "IPropertyValue" || name == "WIN32_ERROR" || name == "HANDLE" || name == "PSECURITY_DESCRIPTOR" || name == "FILETIME" || name == "IPropertySet")
                     {
                         return new TypeRef.MissingClrType(@namespace, name);
                     }
@@ -130,8 +140,8 @@ namespace JsonWin32Generator
                         return new TypeRef.MissingClrType(@namespace, name);
                     }
                 }
-
-                throw new InvalidOperationException();
+                return new TypeRef.MissingClrType(@namespace, name);
+                // throw new InvalidOperationException();
             }
 
             throw Violation.Data(Fmt.In($"unhandled typeRef.ResolutionScope.Kind {typeRef.ResolutionScope.Kind}"));

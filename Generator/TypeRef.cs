@@ -32,6 +32,10 @@ namespace JsonWin32Generator
                 return Primitive.Void;
             }
 
+            if (this is TypeRef.LPArray array)
+            {
+                return array.ChildType;
+            }
             if (this is TypeRef.User userType)
             {
                 if (userType.Info.Fqn == "Windows.Win32.Foundation.PSTR")
@@ -216,12 +220,22 @@ namespace JsonWin32Generator
 
         internal class LPArray : TypeRef
         {
+            internal static readonly LPArray PSTRInstance = new LPArray(1, -1, TypeRef.Primitive.Byte);
+            internal static readonly LPArray PWSTRInstance = new LPArray(1, -1, TypeRef.Primitive.Char);
             internal LPArray(CustomAttr.NativeArrayInfo info, TypeRef typeRef, TypeRefDecoder typeRefDecoder)
             {
                 this.NullNullTerm = false;
                 this.CountConst = info.CountConst ?? -1;
                 this.CountParamIndex = info.CountParamIndex ?? -1;
                 this.ChildType = typeRef.GetChildType(typeRefDecoder);
+            }
+
+            internal LPArray(int countConst, short countParam, TypeRef childType)
+            {
+                this.NullNullTerm = false;
+                this.CountConst = countConst;
+                this.CountParamIndex = countParam;
+                this.ChildType = childType;
             }
 
             internal bool NullNullTerm { get; }

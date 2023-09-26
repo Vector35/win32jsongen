@@ -10,9 +10,11 @@ namespace JsonWin32Generator
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Reflection;
     using System.Reflection.Metadata;
     using System.Text;
+    using Microsoft;
 
     internal record NamespaceAndName(string Namespace, string Name);
 
@@ -34,6 +36,8 @@ namespace JsonWin32Generator
     internal static class Metadata
     {
         internal const string WindowsWin32NamespacePrefix = "Windows.Win32.";
+        internal const string WindowsWdkNamespacePrefix = "Windows.Wdk.";
+        // Microsoft.Windows.SDK.Win32Metadata
     }
 
     // Shorthand for Formattable.Invariant
@@ -133,6 +137,11 @@ namespace JsonWin32Generator
             return constant.TypeCode.ReadConstValue(mr.GetBlobReader(constant.Value));
         }
 
+        private static string ToLiteral(string valueTextForCompiler)
+        {
+            return Microsoft.CodeAnalysis.CSharp.SymbolDisplay.FormatLiteral(valueTextForCompiler, false);
+        }
+
         private static string ReadConstValue(this ConstantTypeCode code, BlobReader blobReader)
         {
             return code switch
@@ -155,7 +164,12 @@ namespace JsonWin32Generator
             };
             static string GetString(object? obj)
             {
-                return Fmt.In($"\"{(string)obj!}\"");
+                string str = obj.ToString();
+                if (str.IndexOf('\0') != -1)
+                    str = str.Substring(0, str.IndexOf('\0'));
+                string value = ToLiteral(str);
+
+                return Fmt.In($"\"{value}\"");
             }
 
             static string GetFloat(float value)

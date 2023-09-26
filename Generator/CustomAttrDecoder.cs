@@ -95,7 +95,15 @@ namespace JsonWin32Generator
                 }
             }
 
-            if (@namespace == "Windows.Win32.Interop")
+            if (@namespace == "System")
+            {
+                if (name == "AttributeTargets")
+                {
+                    return CustomAttrType.Architecture; // DO nothing
+                }
+            }
+
+            if (@namespace == "Windows.Win32.Foundation.Metadata")
             {
                 if (name == "Architecture")
                 {
@@ -155,6 +163,7 @@ namespace JsonWin32Generator
         SystemType,
         Str,
         Architecture,
+        AttributeTargets
     }
 
     internal static class CustomAttrTypeMap
@@ -245,14 +254,14 @@ namespace JsonWin32Generator
             CustomAttribute attr = mr.GetCustomAttribute(attrHandle);
             NamespaceAndName attrName = attr.GetAttrTypeName(mr);
             CustomAttributeValue<CustomAttrType> attrArgs = attr.DecodeValue(CustomAttrDecoder.Instance);
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "ConstAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "ConstAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return CustomAttr.Const.Instance;
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "NativeArrayInfoAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "NativeArrayInfoAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
                 short? countParamIndex = null;
@@ -308,14 +317,24 @@ namespace JsonWin32Generator
                 return CustomAttr.Flags.Instance;
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "GuidAttribute"))
+
+
+            if (attrName == new NamespaceAndName("System", "AttributeUsageAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 1);
+                // Enforce.AttrNamedArgCount(attrName, attrArgs, 1); Attribute can have variable number of named args
+                return CustomAttr.AttributeUsageAttribute.Instance;
+            }
+
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "GuidAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 11);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return new CustomAttr.Guid(DecodeGuid(attrArgs.FixedArguments, 0));
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "PropertyKeyAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "PropertyKeyAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 12);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
@@ -324,14 +343,14 @@ namespace JsonWin32Generator
                     Enforce.FixedAttrAs<uint>(attrArgs.FixedArguments[11]));
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "RAIIFreeAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "RAIIFreeAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 1);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return new CustomAttr.RaiiFree(Enforce.FixedAttrAs<string>(attrArgs.FixedArguments[0]));
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "NativeTypedefAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "NativeTypedefAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
@@ -345,56 +364,56 @@ namespace JsonWin32Generator
                 return CustomAttr.UnmanagedFunctionPointer.Instance;
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "ComOutPtrAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "ComOutPtrAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return CustomAttr.ComOutPtr.Instance;
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "NotNullTerminatedAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "NotNullTerminatedAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return CustomAttr.NotNullTerminated.Instance;
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "NullNullTerminatedAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "NullNullTerminatedAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return CustomAttr.NullNullTerminated.Instance;
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "RetValAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "RetValAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return CustomAttr.RetVal.Instance;
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "FreeWithAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "FreeWithAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 1);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return new CustomAttr.FreeWithAttribute(Enforce.FixedAttrAs<string>(attrArgs.FixedArguments[0]));
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "SupportedOSPlatformAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "SupportedOSPlatformAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 1);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return new CustomAttr.SupportedOSPlatform(Enforce.FixedAttrAs<string>(attrArgs.FixedArguments[0]));
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "AlsoUsableForAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "AlsoUsableForAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 1);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return new CustomAttr.AlsoUsableFor(Enforce.FixedAttrAs<string>(attrArgs.FixedArguments[0]));
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "MemorySizeAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "MemorySizeAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 1);
@@ -402,35 +421,35 @@ namespace JsonWin32Generator
                 return new CustomAttr.MemorySize(Enforce.NamedAttrAs<short>(attrArgs.NamedArguments[0]));
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "SupportedArchitectureAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "SupportedArchitectureAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 1);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return new CustomAttr.SupportedArchitecture(Enforce.FixedAttrAs<Architecture>(attrArgs.FixedArguments[0]));
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "ScopedEnumAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "ScopedEnumAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return CustomAttr.ScopedEnum.Instance;
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "DoNotReleaseAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "DoNotReleaseAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return CustomAttr.DoNotRelease.Instance;
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "ReservedAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "ReservedAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return CustomAttr.Reserved.Instance;
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "AgileAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "AgileAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
@@ -444,37 +463,114 @@ namespace JsonWin32Generator
                 return CustomAttr.DoesNotReturnAttribute.Instance;
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "InvalidHandleValueAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "InvalidHandleValueAttribute"))
             {
                 return new CustomAttr.InvalidHandleValueAttribute(Enforce.FixedAttrAs<long>(attrArgs.FixedArguments[0]));
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "NativeEncodingAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "NativeEncodingAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 1);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return new CustomAttr.NativeEncodingAttribute(Enforce.FixedAttrAs<string>(attrArgs.FixedArguments[0]));
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "CanReturnMultipleSuccessValuesAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "CanReturnMultipleSuccessValuesAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return CustomAttr.CanReturnMultipleSuccessValuesAttribute.Instance;
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "CanReturnErrorsAsSuccessAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "CanReturnErrorsAsSuccessAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return CustomAttr.CanReturnErrorsAsSuccessAttribute.Instance;
             }
 
-            if (attrName == new NamespaceAndName("Windows.Win32.Interop", "ConstantAttribute"))
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "ConstantAttribute"))
             {
                 Enforce.AttrFixedArgCount(attrName, attrArgs, 1); // TODO what do we do with this argument?? 
                 Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
                 return CustomAttr.ConstAttribute.Instance;
+            }
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "DocumentationAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 1);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.DocumentationAttribute.Instance;
+            }
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "AnsiAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.AnsiAttribute.Instance;
+            }
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "UnicodeAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.UnicodeAttribute.Instance;
+            }
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "StructSizeFieldAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 1);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.StructSizeFieldAttribute.Instance;
+            }
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "FlexibleArrayAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.FlexibleArrayAttribute.Instance;
+            }
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "AssociatedEnumAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 1);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.AssociatedEnumAttribute.Instance;
+            }
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "NativeBitfieldAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 3);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.NativeBitfieldAttribute.Instance;
+            }
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "MetadataTypedefAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 0);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.MetadataTypedefAttribute.Instance;
+            }
+
+            if (attrName == new NamespaceAndName("System.Runtime.InteropServices", "ComVisibleAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 1);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.ComVisibleAttribute.Instance;
+            }
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "AssociatedConstantAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 1);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.AssociatedConstantAttribute.Instance;
+            }
+
+            if (attrName == new NamespaceAndName("Windows.Win32.Foundation.Metadata", "IgnoreIfReturnAttribute"))
+            {
+                Enforce.AttrFixedArgCount(attrName, attrArgs, 1);
+                Enforce.AttrNamedArgCount(attrName, attrArgs, 0);
+                return CustomAttr.IgnoreReturnAttribute.Instance;
             }
 
             throw new NotImplementedException(Fmt.In($"unhandled custom attribute \"{attrName.Namespace}\", \"{attrName.Name}\""));
@@ -778,5 +874,127 @@ namespace JsonWin32Generator
             {
             }
         }
+
+
+        internal class DocumentationAttribute : CustomAttr
+        {
+            public static readonly DocumentationAttribute Instance = new DocumentationAttribute();
+
+            private DocumentationAttribute()
+            {
+            }
+        }
+
+
+        internal class AnsiAttribute : CustomAttr
+        {
+            public static readonly AnsiAttribute Instance = new AnsiAttribute();
+
+            private AnsiAttribute()
+            {
+            }
+        }
+        
+
+        internal class UnicodeAttribute : CustomAttr
+        {
+            public static readonly UnicodeAttribute Instance = new UnicodeAttribute();
+
+            private UnicodeAttribute()
+            {
+            }
+        }
+
+        internal class StructSizeFieldAttribute : CustomAttr
+        {
+            public static readonly StructSizeFieldAttribute Instance = new StructSizeFieldAttribute();
+
+            private StructSizeFieldAttribute()
+            {
+            }
+        }
+
+
+        internal class FlexibleArrayAttribute : CustomAttr
+        {
+            public static readonly FlexibleArrayAttribute Instance = new FlexibleArrayAttribute();
+
+            private FlexibleArrayAttribute()
+            {
+            }
+        }
+
+
+        internal class AssociatedEnumAttribute : CustomAttr
+        {
+            public static readonly AssociatedEnumAttribute Instance = new AssociatedEnumAttribute();
+
+            private AssociatedEnumAttribute()
+            {
+            }
+        }
+
+
+        internal class AttributeUsageAttribute : CustomAttr
+        {
+            public static readonly AttributeUsageAttribute Instance = new AttributeUsageAttribute();
+
+            private AttributeUsageAttribute()
+            {
+            }
+        }
+        
+
+        internal class NativeBitfieldAttribute : CustomAttr
+        {
+            public static readonly NativeBitfieldAttribute Instance = new NativeBitfieldAttribute();
+
+            private NativeBitfieldAttribute()
+            {
+            }
+        }
+
+
+        internal class MetadataTypedefAttribute : CustomAttr
+        {
+            public static readonly MetadataTypedefAttribute Instance = new MetadataTypedefAttribute();
+
+            private MetadataTypedefAttribute()
+            {
+            }
+        }
+
+
+        internal class ComVisibleAttribute : CustomAttr
+        {
+            public static readonly ComVisibleAttribute Instance = new ComVisibleAttribute();
+
+            private ComVisibleAttribute()
+            {
+            }
+        }
+
+
+        internal class AssociatedConstantAttribute : CustomAttr
+        {
+            public static readonly AssociatedConstantAttribute Instance = new AssociatedConstantAttribute();
+
+            private AssociatedConstantAttribute()
+            {
+            }
+        }
+
+
+        internal class IgnoreReturnAttribute : CustomAttr
+        {
+            public static readonly IgnoreReturnAttribute Instance = new IgnoreReturnAttribute();
+
+            private IgnoreReturnAttribute()
+            {
+            }
+        }
+        
+
+
     }
 }

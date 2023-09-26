@@ -114,7 +114,8 @@ namespace JsonWin32Generator
             string? apiName;
             if (!apiNamespaceToName.TryGetValue(@namespace, out apiName))
             {
-                Enforce.Data(@namespace.StartsWith(Metadata.WindowsWin32NamespacePrefix, StringComparison.Ordinal));
+                Enforce.Data(@namespace.StartsWith(Metadata.WindowsWin32NamespacePrefix, StringComparison.Ordinal) ||
+                @namespace.StartsWith(Metadata.WindowsWdkNamespacePrefix, StringComparison.Ordinal));
                 apiName = @namespace.Substring(Metadata.WindowsWin32NamespacePrefix.Length);
                 apiNamespaceToName.Add(@namespace, apiName);
             }
